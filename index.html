@@ -87,7 +87,7 @@ const F=()=>VAR[vr],C=()=>F().map(f=>f[0]),lab=x=>x[0].toUpperCase()+x.slice(1),
 const SEED=[{id:"101",name:"Diena",a:"Curchorem, Goa",m:"CT"},{id:"102",name:"Sufiyan S",a:"Curchorem",m:"BSc"},{id:"103",name:"Sushmita",a:"Xeldem, Goa",m:"CT"}];
 const CT={Emp_table:{db:"Employee",cols:[["empid","INT PRIMARY KEY"],["name","VARCHAR(50)"],["basic_salary","DECIMAL(10,2)"]],rows:[[1,"Ashwin",10000],[2,"Divya",15000],[3,"Tasmiya",22000]]},
 Bank:{db:"Customer",cols:[["Custid","INT PRIMARY KEY"],["name","VARCHAR(50)"],["deposit","DECIMAL(10,2)"]],rows:[[1,"Lisha",5000],[2,"Lionel",12000],[3,"Xavier",20000]]}};
-const sqlT=n=>{const t=CT[n];return"CREATE DATABASE IF NOT EXISTS "+t.db+";\nUSE "+t.db+";\nCREATE TABLE "+n+" ("+t.cols.map(c=>c.join(" ")).join(", ")+");\nINSERT INTO "+n+" VALUES "+t.rows.map(r=>"("+r.map(v=>typeof v==="number"?v:"'"+v+"'").join(", ")+")").join(", ")+";"};
+const sqlT=n=>{const t=CT[n];return"CREATE DATABASE "+t.db+";\nUSE "+t.db+";\nCREATE TABLE "+n+" ("+t.cols.map(c=>c.join(" ")).join(", ")+");\nINSERT INTO "+n+" VALUES "+t.rows.map(r=>"("+r.map(v=>typeof v==="number"?v:"'"+v+"'").join(", ")+")").join(", ")+";"};
 const tbl=(cols,rs)=>`<table><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr>${rs.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</table>`;
 
 /* ---- code generators: mysql_* and mysqli_* written out explicitly ---- */
@@ -310,7 +310,6 @@ function theory(){
  let h=`<div class="card"><div class="meta"><span class="pill">10 marks</span>Unit V: MySQL PHP connectivity</div><h2>Functions in the syllabus</h2>
  <div class="say">For a 10-mark answer, write for each function: what it does, its syntax, the parameters or return value, and a short example. Use the mysql_* / mysqli_* switch above to choose which style is shown first.</div>
  <div class="sc"><table class="map th"><tr><th>#</th><th>Syllabus</th><th>mysql_*</th><th>mysqli_*</th></tr>${TH_FN.map(f=>`<tr><td>${f.n}</td><td>${esc(["mysql_connect()","mysql_create_db()","mysql_drop_db()","mysql_fetch_array()","mysql_close()","mysql_num_row()","mysql_query()","mysql_select_db()","mysql-select()","mysql_error()"][f.n-1])}</td><td>${esc(f.my)}</td><td>${esc(f.mi)}</td></tr>`).join("")}</table></div>
- <div class="tip" style="margin:10px 0 0"><b>Two spellings to correct:</b> mysql_num_row() is really <b>mysql_num_rows()</b>, and mysql-select() is not a real function (see card 9).</div></div>
  <div class="card"><h2>mysql_* and mysqli_*: key differences</h2><ul>
  <li><b>PHP version:</b> mysql_* was deprecated in PHP 5.5 and removed in PHP 7.0. mysqli_* ("MySQL improved") works in PHP 5, 7 and 8.</li>
  <li><b>Argument order:</b> mysqli_* functions take the connection first, as in mysqli_query($con, $sql). In mysql_* the connection comes last and is optional.</li>
@@ -342,5 +341,6 @@ document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)r
 render();
 </script>
 <footer style="font-size: medium; font-family: 'Courier New', Courier, monospace; text-align: center; margin-bottom: 25px;"> Powered by Mithili S Kakodkar </footer>
+
 </body>
 </html>
