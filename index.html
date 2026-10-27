@@ -57,7 +57,7 @@ td{color:#111}tr.hl td{background:#fff3c4}
 .msg{font:.82rem var(--mono);margin-bottom:6px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
 .map{width:100%;font-size:.85rem}.map td,.map th{border-color:var(--line);color:var(--ink);background:none}.map th{background:var(--vbg)}
 .map td{font-family:var(--mono)}
-.ws td input{width:92px}.good{background:var(--okbg)!important}.wrong{background:var(--badbg)!important}
+.sc{overflow-x:auto}.th td{font-family:var(--sans);vertical-align:top}.th td:first-child{font-family:var(--mono);white-space:nowrap}.th pre{white-space:pre}.card ul{padding-left:20px;margin:8px 0 0}.card li{margin-bottom:6px}
 .work{font:.85rem var(--mono);background:var(--vbg);border-radius:8px;padding:8px 12px;margin-top:8px;white-space:pre-wrap}
 .opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 12px;margin:6px 0}
 .opt.good{border-color:var(--ok)}.opt.wrong{border-color:var(--bad)}
@@ -81,7 +81,7 @@ details summary{cursor:pointer;font-weight:600}
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-let mode="mysqli",tab="prog",vr="p1",cm="gross",CS=null,made=false,rows=[];
+let mode="mysqli",tab="prog",vr="p1",made=false,rows=[];
 const VAR={p1:[["roll_no","id"],["name","name"],["address","a"],["course","m"]]};
 const F=()=>VAR[vr],C=()=>F().map(f=>f[0]),lab=x=>x[0].toUpperCase()+x.slice(1),H=()=>C().map(lab),kf=n=>F().find(f=>f[0]===n)[1];
 const SEED=[{id:"101",name:"Diena",a:"Curchorem, Goa",m:"CT"},{id:"102",name:"Sufiyan S",a:"Curchorem",m:"BSc"},{id:"103",name:"Sushmita",a:"Xeldem, Goa",m:"CT"}];
@@ -212,38 +212,135 @@ function progTab(){const P=PR();let h=`<div class="tip"><b>Suggested order:</b> 
 function out(id,r){let h=r.msg?`<div class="msg ${r.bad?"bad":"ok"}">${esc(r.msg)}</div>`:"";if(!r.bad)h+=`<div class="browser"><div>${tbl(r.cols,r.rows)}</div></div>`;$("#o-"+id).innerHTML=h}
 function runP(id){const p=PR().find(x=>x.id===id),ins=typeof p.inputs==="function"?p.inputs():p.inputs,v={};ins.forEach(i=>v[i[0]]=$(`#in-${id}-${i[0]}`).value);out(id,p.run(v))}
 
-/* ---- calculation drills ---- */
-const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
-function newSheet(){CS={r:cm==="gross"?[53,15]:[[4,5,6,8][rnd(0,3)]],rows:[0,1,2].map(()=>rnd(16,80)*500)};drill()}
-const calc=()=>CS.rows.map(b=>{if(cm==="gross"){const d=b*CS.r[0]/100,h=b*CS.r[1]/100;return[d,h,b+d+h]}const i=b*CS.r[0]/100;return[i,b+i]});
-function drill(){const g=cm==="gross",a=calc();
- $("#main").innerHTML=`<div class="seg" style="display:inline-flex;margin-bottom:12px"><button data-cm="gross" aria-pressed="${g}">Gross salary</button><button data-cm="int" aria-pressed="${!g}">Interest</button></div>
- <div class="card"><h2>${g?"Find DA, HRA and Gross":"Find Interest and Total"}</h2><div class="say">${g?`DA = ${CS.r[0]}% of basic, HRA = ${CS.r[1]}% of basic, Gross = Basic + DA + HRA.`:`Interest = Deposit × ${CS.r[0]} ÷ 100, Total = Deposit + Interest.`} Exams reuse this pattern with new numbers and field names.</div>
- <table class="map ws"><tr><th>${g?"Basic":"Deposit"}</th>${g?"<th>DA</th><th>HRA</th><th>Gross</th>":"<th>Interest</th><th>Total</th>"}</tr>${CS.rows.map((b,i)=>`<tr><td>${b}</td>${a[i].map((x,j)=>`<td><input data-ans="${i}:${j}" inputmode="decimal" aria-label="answer ${i+1}.${j+1}"></td>`).join("")}</tr>`).join("")}</table>
- <div class="row" style="margin-top:10px"><button class="go" id="chk">Check answers</button><button class="ghost" id="wk">Show working</button><button class="ghost" id="nw">New numbers</button></div><div class="msg" id="sc" style="margin-top:8px"></div><div class="work" id="wkb" hidden></div></div>
- <div class="tip"><b>Shortcut:</b> ${g?"with DA 53% and HRA 15%, Gross = Basic × 1.68.":"Total = Deposit × (1 + rate/100). At 6% that is Deposit × 1.06."}</div>`}
-function check(){const a=calc();let ok=0,n=0;document.querySelectorAll("[data-ans]").forEach(e=>{const[i,j]=e.dataset.ans.split(":").map(Number);n++;const good=Math.abs(parseFloat(e.value)-a[i][j])<.01;if(good)ok++;e.parentElement.className=good?"good":"wrong"});
- $("#sc").className="msg "+(ok===n?"ok":"bad");$("#sc").textContent=ok===n?`Full marks: ${ok}/${n}`:`${ok}/${n} correct. Red cells need another look.`}
-function working(){const g=cm==="gross",a=calc();$("#wkb").hidden=false;$("#wkb").textContent=CS.rows.map((b,i)=>g?`Basic ${b}\nDA = ${b} × ${CS.r[0]} / 100 = ${a[i][0]}\nHRA = ${b} × ${CS.r[1]} / 100 = ${a[i][1]}\nGross = ${b} + ${a[i][0]} + ${a[i][1]} = ${a[i][2]}`:`Deposit ${b}\nInterest = ${b} × ${CS.r[0]} / 100 = ${a[i][0]}\nTotal = ${b} + ${a[i][0]} = ${a[i][1]}`).join("\n\n")}
+/* ---- theory: mysql_* and mysqli_* functions ---- */
+const TH_FN=[
+{n:1,my:"mysql_connect",mi:"mysqli_connect",title:"Opening a connection",
+ what:"Opens a connection to the MySQL server. It is the first step of every PHP–MySQL program, and all the other functions need the connection it returns.",
+ syn:{mysql:"mysql_connect(string $server, string $username, string $password, bool $new_link = false, int $client_flags = 0): resource|false",
+      mysqli:"mysqli_connect(string $hostname, string $username, string $password, string $database, int $port, string $socket): mysqli|false"},
+ params:[["server / hostname","Host of the MySQL server, usually \"localhost\"."],["username","MySQL user name, e.g. \"root\"."],["password","Password of that user. Empty string \"\" on a default XAMPP/WAMP."],["database (mysqli only)","Database to select straight away, e.g. \"college\"."],["port, socket (optional)","Non-default port or socket. Rarely needed."]],
+ ret:{mysql:"A connection (link) resource on success, FALSE on failure.",mysqli:"A mysqli connection object on success, FALSE on failure. (From PHP 8.1 a failure throws mysqli_sql_exception by default.)"},
+ ex:{mysql:`$con = mysql_connect("localhost", "root", "")\n       or die(mysql_error());`,
+     mysqli:`$con = mysqli_connect("localhost", "root", "", "college");\nif (!$con) {\n    die("Connection failed: " . mysqli_connect_error());\n}`},
+ tip:"Always test the return value. When the connection itself fails there is no $con, so use mysqli_connect_error(), not mysqli_error($con)."},
+{n:2,my:"mysql_create_db",mi:"(no mysqli function)",title:"Creating a database",
+ what:"Creates a new database on the MySQL server.",
+ syn:{mysql:"mysql_create_db(string $database_name, resource $link_identifier = NULL): bool",
+      mysqli:"// mysqli_create_db() does not exist. Send the SQL statement instead:\nmysqli_query(mysqli $mysql, \"CREATE DATABASE database_name\"): mysqli_result|bool"},
+ params:[["database_name","Name of the database to create."],["link_identifier / $mysql","The connection. In mysql_* it may be left out and the last opened connection is used."]],
+ ret:{mysql:"TRUE on success, FALSE on failure.",mysqli:"TRUE on success, FALSE on failure (the value returned by mysqli_query)."},
+ ex:{mysql:`$con = mysql_connect("localhost", "root", "");\nif (mysql_create_db("college", $con)) {\n    echo "Database created";\n} else {\n    echo mysql_error();\n}`,
+     mysqli:`$con = mysqli_connect("localhost", "root", "");\nif (mysqli_query($con, "CREATE DATABASE college")) {\n    echo "Database created";\n} else {\n    echo mysqli_error($con);\n}`},
+ tip:"mysql_create_db() was deprecated in PHP 4.3 and removed in PHP 7. Even in old PHP, mysql_query(\"CREATE DATABASE ...\") was the recommended way."},
+{n:3,my:"mysql_drop_db",mi:"(no mysqli function)",title:"Deleting a database",
+ what:"Deletes a database together with all its tables and records. It cannot be undone.",
+ syn:{mysql:"mysql_drop_db(string $database_name, resource $link_identifier = NULL): bool",
+      mysqli:"// mysqli_drop_db() does not exist. Send the SQL statement instead:\nmysqli_query(mysqli $mysql, \"DROP DATABASE database_name\"): mysqli_result|bool"},
+ params:[["database_name","Name of the database to delete."],["link_identifier / $mysql","The connection."]],
+ ret:{mysql:"TRUE on success, FALSE on failure.",mysqli:"TRUE on success, FALSE on failure (the value returned by mysqli_query)."},
+ ex:{mysql:`$con = mysql_connect("localhost", "root", "");\nif (mysql_drop_db("college", $con)) {\n    echo "Database deleted";\n} else {\n    echo mysql_error();\n}`,
+     mysqli:`$con = mysqli_connect("localhost", "root", "");\nif (mysqli_query($con, "DROP DATABASE college")) {\n    echo "Database deleted";\n} else {\n    echo mysqli_error($con);\n}`},
+ tip:"Like mysql_create_db(), it was deprecated in PHP 4.3 and removed in PHP 7. Use DROP DATABASE through the query function."},
+{n:4,my:"mysql_fetch_array",mi:"mysqli_fetch_array",title:"Reading rows from a result",
+ what:"Reads the next row of a result set and returns it as an array. Call it inside a while loop to read every row. By default the array can be read both by column number ($row[0]) and by column name ($row['name']).",
+ syn:{mysql:"mysql_fetch_array(resource $result, int $result_type = MYSQL_BOTH): array|false",
+      mysqli:"mysqli_fetch_array(mysqli_result $result, int $mode = MYSQLI_BOTH): array|null|false"},
+ params:[["result","The result returned by mysql_query() / mysqli_query() for a SELECT."],["result_type / mode","MYSQL_ASSOC / MYSQLI_ASSOC: names only. MYSQL_NUM / MYSQLI_NUM: numbers only. MYSQL_BOTH / MYSQLI_BOTH: both (default)."]],
+ ret:{mysql:"An array holding the row, or FALSE when there are no more rows.",mysqli:"An array holding the row, or NULL when there are no more rows (FALSE on failure)."},
+ ex:{mysql:`$result = mysql_query("SELECT * FROM student");\nwhile ($row = mysql_fetch_array($result)) {\n    echo $row['roll_no'] . " " . $row['name'] . "<br>";\n}`,
+     mysqli:`$result = mysqli_query($con, "SELECT * FROM student");\nwhile ($row = mysqli_fetch_array($result)) {\n    echo $row['roll_no'] . " " . $row['name'] . "<br>";\n}`},
+ tip:"Column names used as array keys are case-sensitive: $row['Custid'] and $row['custid'] are different."},
+{n:5,my:"mysql_close",mi:"mysqli_close",title:"Closing the connection",
+ what:"Closes the connection to the MySQL server and frees the resources it holds. PHP also closes it when the script ends, but closing it yourself is good practice.",
+ syn:{mysql:"mysql_close(resource $link_identifier = NULL): bool",
+      mysqli:"mysqli_close(mysqli $mysql): bool"},
+ params:[["link_identifier / $mysql","The connection to close. In mysql_* the last opened connection is used if it is left out."]],
+ ret:{mysql:"TRUE on success, FALSE on failure.",mysqli:"TRUE on success. (From PHP 8.0 it always returns TRUE.)"},
+ ex:{mysql:`$con = mysql_connect("localhost", "root", "");\n// ... work with the database ...\nmysql_close($con);`,
+     mysqli:`$con = mysqli_connect("localhost", "root", "", "college");\n// ... work with the database ...\nmysqli_close($con);`},
+ tip:"Close the connection after the last query and after printing the report."},
+{n:6,my:"mysql_num_rows",mi:"mysqli_num_rows",title:"Counting rows in a result",
+ what:"Returns the number of rows in the result of a SELECT query. It is used to check whether any record was found, for example in a search program.",
+ syn:{mysql:"mysql_num_rows(resource $result): int|false",
+      mysqli:"mysqli_num_rows(mysqli_result $result): int|string"},
+ params:[["result","The result returned by a SELECT query."]],
+ ret:{mysql:"Number of rows as an integer, or FALSE on failure.",mysqli:"Number of rows as an integer. (A string if the number is larger than PHP_INT_MAX.)"},
+ ex:{mysql:`$result = mysql_query("SELECT * FROM student WHERE roll_no='101'");\nif (mysql_num_rows($result) > 0) {\n    echo "Record found";\n} else {\n    echo "Student record not found";\n}`,
+     mysqli:`$result = mysqli_query($con, "SELECT * FROM student WHERE roll_no='101'");\nif (mysqli_num_rows($result) > 0) {\n    echo "Record found";\n} else {\n    echo "Student record not found";\n}`},
+ tip:"The syllabus writes mysql_num_row(), but the real function is mysql_num_rows() with an s. It works for SELECT only. After INSERT, UPDATE or DELETE use mysql_affected_rows() / mysqli_affected_rows()."},
+{n:7,my:"mysql_query",mi:"mysqli_query",title:"Running an SQL statement",
+ what:"Sends one SQL statement to the database. It is used for CREATE, INSERT, UPDATE, DELETE, SELECT and every other SQL statement.",
+ syn:{mysql:"mysql_query(string $query, resource $link_identifier = NULL): resource|bool",
+      mysqli:"mysqli_query(mysqli $mysql, string $query, int $result_mode = MYSQLI_STORE_RESULT): mysqli_result|bool"},
+ params:[["query","The SQL statement as a string. No semicolon is needed at the end."],["link_identifier / $mysql","The connection. In mysqli_query() it is always the first argument."],["result_mode (mysqli only)","Optional. Default MYSQLI_STORE_RESULT fetches the whole result at once."]],
+ ret:{mysql:"SELECT, SHOW, DESCRIBE, EXPLAIN: a result resource. Other statements: TRUE. On error: FALSE.",mysqli:"SELECT, SHOW, DESCRIBE, EXPLAIN: a mysqli_result object. Other statements: TRUE. On error: FALSE."},
+ ex:{mysql:`$sql = "INSERT INTO student VALUES ('101', 'Neha', 'Goa', 'BCA')";\nif (mysql_query($sql)) {\n    echo "Record inserted";\n} else {\n    echo mysql_error();\n}`,
+     mysqli:`$sql = "INSERT INTO student VALUES ('101', 'Neha', 'Goa', 'BCA')";\nif (mysqli_query($con, $sql)) {\n    echo "Record inserted";\n} else {\n    echo mysqli_error($con);\n}`},
+ tip:"Remember the argument order: mysql_query($sql) but mysqli_query($con, $sql)."},
+{n:8,my:"mysql_select_db",mi:"mysqli_select_db",title:"Choosing the database",
+ what:"Selects the database on which all later queries run. It does the same job as the SQL command USE database_name.",
+ syn:{mysql:"mysql_select_db(string $database_name, resource $link_identifier = NULL): bool",
+      mysqli:"mysqli_select_db(mysqli $mysql, string $database): bool"},
+ params:[["database_name / $database","Name of the database to select."],["link_identifier / $mysql","The connection."]],
+ ret:{mysql:"TRUE on success, FALSE on failure.",mysqli:"TRUE on success, FALSE on failure."},
+ ex:{mysql:`$con = mysql_connect("localhost", "root", "");\nmysql_select_db("college", $con);`,
+     mysqli:`$con = mysqli_connect("localhost", "root", "");\nmysqli_select_db($con, "college");`},
+ tip:"mysqli_connect() can select the database itself through its 4th argument, so many mysqli programs never call this function."},
+{n:9,my:"mysql-select()",mi:"SELECT query",title:"Selecting records (SELECT)",
+ what:"As written in the syllabus, mysql-select() is not an actual PHP function (a hyphen cannot be part of a function name). Records are retrieved with the SQL SELECT statement, which is sent through mysql_query() / mysqli_query(), and the rows are then read with fetch_array. In the exam, mention this and give the SELECT syntax with an example. If mysql_select_db() was meant, see card 8.",
+ syn:{mysql:"$result = mysql_query(\"SELECT column1, column2 FROM table_name WHERE condition\");",
+      mysqli:"$result = mysqli_query($con, \"SELECT column1, column2 FROM table_name WHERE condition\");"},
+ params:[["column1, column2","Columns to fetch. Use * for all columns."],["FROM table_name","Table to read from."],["WHERE condition","Optional. Only rows matching the condition are returned."],["ORDER BY column","Optional. Sorts the result."]],
+ ret:{mysql:"A result resource that mysql_fetch_array() can read. FALSE on error.",mysqli:"A mysqli_result object that mysqli_fetch_array() can read. FALSE on error."},
+ ex:{mysql:`$result = mysql_query("SELECT name, course FROM student WHERE course='BCA'");\nwhile ($row = mysql_fetch_array($result)) {\n    echo $row['name'] . " - " . $row['course'] . "<br>";\n}`,
+     mysqli:`$result = mysqli_query($con, "SELECT name, course FROM student WHERE course='BCA'");\nwhile ($row = mysqli_fetch_array($result)) {\n    echo $row['name'] . " - " . $row['course'] . "<br>";\n}`},
+ tip:"Use SELECT * FROM table to read every column, and add WHERE to read specific records."},
+{n:10,my:"mysql_error",mi:"mysqli_error",title:"Reading the error message",
+ what:"Returns the text of the error message from the last MySQL operation, or an empty string if there was no error. It is used in die() or in the else part to show why a query failed.",
+ syn:{mysql:"mysql_error(resource $link_identifier = NULL): string",
+      mysqli:"mysqli_error(mysqli $mysql): string"},
+ params:[["link_identifier / $mysql","The connection whose last error is wanted."]],
+ ret:{mysql:"The error message as a string, or \"\" if there was no error.",mysqli:"The error message as a string, or \"\" if there was no error."},
+ ex:{mysql:`if (!mysql_query("SELECT * FROM nothing")) {\n    echo "Error: " . mysql_error();\n}`,
+     mysqli:`if (!mysqli_query($con, "SELECT * FROM nothing")) {\n    echo "Error: " . mysqli_error($con);\n}`},
+ tip:"Related: mysql_errno() / mysqli_errno() give the error number, and mysqli_connect_error() gives the message when connecting itself failed."}
+];
+function theory(){
+ const first=mode,second=mode==="mysql"?"mysqli":"mysql",lbl=m=>m==="mysql"?"mysql_* style (PHP 5 and older)":"mysqli_* style (PHP 7 and later)";
+ let h=`<div class="card"><div class="meta"><span class="pill">10 marks</span>Unit V: MySQL PHP connectivity</div><h2>Functions in the syllabus</h2>
+ <div class="say">For a 10-mark answer, write for each function: what it does, its syntax, the parameters or return value, and a short example. Use the mysql_* / mysqli_* switch above to choose which style is shown first.</div>
+ <div class="sc"><table class="map th"><tr><th>#</th><th>Syllabus</th><th>mysql_*</th><th>mysqli_*</th></tr>${TH_FN.map(f=>`<tr><td>${f.n}</td><td>${esc(["mysql_connect()","mysql_create_db()","mysql_drop_db()","mysql_fetch_array()","mysql_close()","mysql_num_row()","mysql_query()","mysql_select_db()","mysql-select()","mysql_error()"][f.n-1])}</td><td>${esc(f.my)}</td><td>${esc(f.mi)}</td></tr>`).join("")}</table></div>
+ <div class="tip" style="margin:10px 0 0"><b>Two spellings to correct:</b> mysql_num_row() is really <b>mysql_num_rows()</b>, and mysql-select() is not a real function (see card 9).</div></div>
+ <div class="card"><h2>mysql_* and mysqli_*: key differences</h2><ul>
+ <li><b>PHP version:</b> mysql_* was deprecated in PHP 5.5 and removed in PHP 7.0. mysqli_* ("MySQL improved") works in PHP 5, 7 and 8.</li>
+ <li><b>Argument order:</b> mysqli_* functions take the connection first, as in mysqli_query($con, $sql). In mysql_* the connection comes last and is optional.</li>
+ <li><b>Selecting the database:</b> mysqli_connect() accepts the database name as its 4th argument. mysql_* needs a separate mysql_select_db().</li>
+ <li><b>Database creation and deletion:</b> mysql_create_db() and mysql_drop_db() have no mysqli equivalent. Use CREATE DATABASE and DROP DATABASE through the query function.</li>
+ <li><b>Connection errors:</b> use mysqli_connect_error() when mysqli_connect() fails, and mysqli_error($con) for query errors.</li>
+ <li><b>Extra features in mysqli:</b> prepared statements, transactions, and an object-oriented style such as <code>$con = new mysqli("localhost", "root", "", "college");</code></li></ul></div>`;
+ TH_FN.forEach(f=>{h+=`<section class="card"><div class="meta"><span class="pill">${f.n} of 10</span>${esc(f.my)} / ${esc(f.mi)}</div><h2>${esc(f.title)}</h2><div class="say">${esc(f.what)}</div>
+ <h3 style="margin:10px 0 0;font-size:.95rem">Syntax</h3>${[first,second].map(m=>`<div class="meta" style="margin:8px 0 0">${lbl(m)}${m===first?" (selected)":""}</div><pre>${esc(f.syn[m])}</pre>`).join("")}
+ <h3 style="margin:10px 0 4px;font-size:.95rem">Parameters</h3><div class="sc"><table class="map th"><tr><th>Parameter</th><th>Meaning</th></tr>${f.params.map(p=>`<tr><td>${esc(p[0])}</td><td>${esc(p[1])}</td></tr>`).join("")}</table></div>
+ <h3 style="margin:10px 0 4px;font-size:.95rem">Return value</h3><div class="sc"><table class="map th"><tr><th>Style</th><th>Returns</th></tr><tr><td>mysql_*</td><td>${esc(f.ret.mysql)}</td></tr><tr><td>mysqli_*</td><td>${esc(f.ret.mysqli)}</td></tr></table></div>
+ <h3 style="margin:10px 0 0;font-size:.95rem">Example</h3>${[first,second].map(m=>`<div class="meta" style="margin:8px 0 0">${lbl(m)}${m===first?" (selected)":""}</div><pre>${esc(f.ex[m])}</pre>`).join("")}
+ <div class="tip" style="margin:8px 0 0"><b>Exam tip:</b> ${esc(f.tip)}</div></section>`});
+ $("#main").innerHTML=h}
 
 /* ---- wiring ---- */
-const TABS=[["prog","Basic programs"],["calc","Calculation drills"]];
+const TABS=[["prog","Basic programs"],["theory","Theory: functions"]];
 function render(){$("#tabs").innerHTML=TABS.map(t=>`<button class="tab" role="tab" data-tab="${t[0]}" aria-selected="${t[0]===tab}">${t[1]}</button>`).join("");
- if(tab==="prog")progTab();else{CS?drill():newSheet()}}
+ if(tab==="prog")progTab();else theory()}
 document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const d=t.dataset;
  if(d.tab){tab=d.tab;render();scrollTo(0,0)}
- else if(d.m){mode=d.m;document.querySelectorAll(".seg [data-m]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===mode));if(tab==="prog")PR().forEach(p=>paint(p.id))}
+ else if(d.m){mode=d.m;document.querySelectorAll(".seg [data-m]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===mode));if(tab==="prog")PR().forEach(p=>paint(p.id));else theory()}
   else if(d.run)runP(d.run)
  else if(d.seed){if(!made)out(d.seed,NEED());else{rows=SEED.map(r=>({...r}));out(d.seed,R("3 sample rows added"))}}
  else if(d.drop){made=false;rows=[];$("#o-"+d.drop).innerHTML='<div class="msg ok">Table dropped. Run CREATE again.</div>'}
  else if(d.key){const[id,i]=d.key.split(":"),on=t.getAttribute("aria-pressed")==="true";document.querySelectorAll(`[data-key^="${id}:"]`).forEach(b=>b.setAttribute("aria-pressed","false"));const p=PR().find(x=>x.id===id);if(on){paint(id);$("#kx-"+id).textContent=""}else{t.setAttribute("aria-pressed","true");paint(id,+i);$("#kx-"+id).textContent=p.keys[i][1]}}
  else if(d.copy){const txt=$("#c-"+d.copy).innerText.replace(/^Copy\n?/,"");try{navigator.clipboard.writeText(txt);t.textContent="Copied"}catch(x){t.textContent="Select and copy"}setTimeout(()=>t.textContent="Copy",1200)}
- else if(d.cm){cm=d.cm;newSheet()}
- else if(t.id==="chk")check();else if(t.id==="wk")working();else if(t.id==="nw")newSheet()});
+ });
 render();
 </script>
-<footer style="font-size: medium; font-family: 'Courier New', Courier, monospace; text-align: center; margin-bottom: 25px;">
-   Powered by Mithili S Kakodkar
-</footer>
+<footer style="font-size: medium; font-family: 'Courier New', Courier, monospace; text-align: center; margin-bottom: 25px;"> Powered by Mithili S Kakodkar </footer>
 </body>
 </html>
