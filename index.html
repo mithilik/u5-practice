@@ -69,8 +69,8 @@ details summary{cursor:pointer;font-weight:600}
 <body>
 <div class="wrap">
 <header>
-<h1>MySQL<span>→</span>PHP <i>Lab</i></h1>
-<p>The 4-mark programs for Unit V: create, insert, update, delete and the two calculation reports. Run each on sample data, tap the code to see what every part does, and switch between mysql_* and mysqli_*.</p>
+<h1>MySQL<span>→</span>PHP <i>Practice</i></h1>
+<p>The 4-mark programs for Unit V: create, insert, delete, update, view, search and the two calculation reports (gross salary and interest). Run each on sample data, tap the code to see what every part does, and switch between mysql_* and mysqli_*. <br> In the exams, expect similar codes with different db name, table, fields and formula</p>
 </header>
 <div class="bar">
 <div class="tabs" role="tablist" id="tabs"></div>
@@ -83,11 +83,10 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 let mode="mysqli",tab="prog",vr="p1",cm="gross",CS=null,made=false,rows=[];
 const VAR={p1:[["roll_no","id"],["name","name"],["address","a"],["course","m"]]};
-const TY={id:"INT PRIMARY KEY",name:"VARCHAR(50)",a:"VARCHAR(100)",m:"VARCHAR(30)"};
 const F=()=>VAR[vr],C=()=>F().map(f=>f[0]),lab=x=>x[0].toUpperCase()+x.slice(1),H=()=>C().map(lab),kf=n=>F().find(f=>f[0]===n)[1];
-const SEED=[{id:"101",name:"Neha Naik",a:"Vasco, Goa",m:"BCA"},{id:"102",name:"Imran Shaikh",a:"Hubballi",m:"BCom"},{id:"103",name:"Lata Kamat",a:"Ponda, Goa",m:"BSc"}];
-const CT={Emp_table:{db:"Employee",cols:[["empid","INT PRIMARY KEY"],["name","VARCHAR(50)"],["basic_salary","DECIMAL(10,2)"]],rows:[[1,"Suresh",10000],[2,"Divya",15000],[3,"Farhan",22000]]},
-Bank:{db:"Customer",cols:[["Custid","INT PRIMARY KEY"],["name","VARCHAR(50)"],["deposit","DECIMAL(10,2)"]],rows:[[1,"Rita",5000],[2,"Joseph",12000],[3,"Kavya",20000]]}};
+const SEED=[{id:"101",name:"Diena",a:"Curchorem, Goa",m:"CT"},{id:"102",name:"Sufiyan S",a:"Curchorem",m:"BSc"},{id:"103",name:"Sushmita",a:"Xeldem, Goa",m:"CT"}];
+const CT={Emp_table:{db:"Employee",cols:[["empid","INT PRIMARY KEY"],["name","VARCHAR(50)"],["basic_salary","DECIMAL(10,2)"]],rows:[[1,"Ashwin",10000],[2,"Divya",15000],[3,"Tasmiya",22000]]},
+Bank:{db:"Customer",cols:[["Custid","INT PRIMARY KEY"],["name","VARCHAR(50)"],["deposit","DECIMAL(10,2)"]],rows:[[1,"Lisha",5000],[2,"Lionel",12000],[3,"Xavier",20000]]}};
 const sqlT=n=>{const t=CT[n];return"CREATE DATABASE IF NOT EXISTS "+t.db+";\nUSE "+t.db+";\nCREATE TABLE "+n+" ("+t.cols.map(c=>c.join(" ")).join(", ")+");\nINSERT INTO "+n+" VALUES "+t.rows.map(r=>"("+r.map(v=>typeof v==="number"?v:"'"+v+"'").join(", ")+")").join(", ")+";"};
 const tbl=(cols,rs)=>`<table><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr>${rs.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</table>`;
 
@@ -96,27 +95,6 @@ const G=()=>{const i=mode==="mysqli",P=i?"mysqli_":"mysql_",c=i?"$con, ":"";
  return{i,P,err:i?"mysqli_error($con)":"mysql_error()",
  conn:db=>i?`$con = mysqli_connect("localhost", "root", "", "${db}");\nif (!$con) { die("Connection failed: " . mysqli_connect_error()); }`:`$con = mysql_connect("localhost", "root", "") or die(mysql_error());\nmysql_select_db("${db}", $con);`,
  q:s=>`${P}query(${c}${s})`}};
-const rd=(g,cs)=>cs.map(c=>`    $${c} = $_POST['${c}'];`).join("\n");
-const rep=g=>`    $result = ${g.q('"SELECT * FROM student"')};
-    echo "<table border='1'>";
-    echo "<tr>${H().map(h=>`<th>${h}</th>`).join("")}</tr>";
-    while ($row = ${g.P}fetch_array($result)) {
-        echo "<tr>${C().map(c=>`<td>".$row['${c}']."</td>`).join("")}</tr>";
-    }
-    echo "</table>";
-    ${g.P}close($con);`;
-const web=(g,fs,btn,body)=>`<html><body>
-<form method="post" action="">
-${fs.map(c=>`  ${lab(c)}: <input type="text" name="${c}"><br><br>`).join("\n")}
-  <input type="submit" name="${btn[0]}" value="${btn[1]}">
-</form>
-<?php
-if (isset($_POST['${btn[0]}'])) {
-    ${g.conn("college").replace(/\n/g,"\n    ")}
-${body}
-}
-?>
-</body></html>`;
 const calcCode=(g,db,tb,head,body)=>`<?php
 ${g.conn(db)}
 $result = ${g.q('"SELECT * FROM '+tb+'"')};
@@ -132,56 +110,8 @@ ${g.P}close($con);
 /* ---- demo helpers ---- */
 const R=msg=>({ok:1,msg,cols:H(),rows:rows.map(r=>F().map(f=>r[f[1]])),browser:1});
 const NEED=()=>made?0:{bad:1,msg:"Error: Table 'college.student' doesn't exist. Run the CREATE program first."};
-const dv=k=>({id:"101",a:"Margao, Goa",m:"MCA"})[kf(k)]||"";
-const PR=()=>{const g=G(),c=C(),U=[c[0],c[2],c[3]];const A=[
-{id:"create",title:"Create the table",ask:`Create table student in database Customer with fields ${c.join(", ")}.`,
- code:`<?php
-${g.i?'$con = mysqli_connect("localhost", "root", "");\nif (!$con) { die("Connection failed: " . mysqli_connect_error()); }':'$con = mysql_connect("localhost", "root", "") or die(mysql_error());'}
-${g.q('"CREATE DATABASE IF NOT EXISTS college"')};
-${g.i?'mysqli_select_db($con, "college");':'mysql_select_db("college", $con);'}
-$sql = "CREATE TABLE student (${F().map(f=>f[0]+" "+TY[f[1]]).join(", ")})";
-if (${g.q("$sql")}) { echo "Table created successfully"; }
-else { echo "Error: " . ${g.err}; }
-${g.P}close($con);
-?>`,
- say:"Connect to the server, create the database if needed, select it, then send a CREATE TABLE statement. The query returns TRUE on success, so test it and print the error if it fails. Run it twice in the demo to see the error.",
- keys:[["CREATE DATABASE IF NOT EXISTS","Creates the database only if it is missing, so the script is safe to run twice."],["CREATE TABLE student","Table name, then each field followed by its data type."],["PRIMARY KEY","roll_no becomes unique: no two students can share a roll number."],["VARCHAR(30)","Text up to 30 characters, enough for a course name such as BCA or MCA."]],
- mk:["Connect to the MySQL server","Create and select the database","CREATE TABLE with correct fields and data types","Run the query, check the result, close"],
- inputs:[],run:()=>{if(made)return{bad:1,msg:"Error: Table 'student' already exists"};made=true;rows=[];return{ok:1,msg:"Table created successfully",cols:["Field","Type","Key"],rows:F().map(f=>[f[0],TY[f[1]].replace(" PRIMARY KEY",""),f[1]==="id"?"PRI":""])}}},
-{id:"insert",title:"Insert a record",ask:`Write PHP code to insert a record into student (${c.join(", ")}) and display all records.`,
- code:web(g,c,["insert","INSERT"],`${rd(g,c)}
-    $sql = "INSERT INTO student (${c.join(", ")}) VALUES (${c.map(x=>"'$"+x+"'").join(", ")})";
-    if (${g.q("$sql")}) { echo "Record inserted<br><br>"; }
-    else { echo "Error: " . ${g.err}; }
-${rep(g)}`),
- say:"A form collects the four values. On submit, the script connects, reads each value from $_POST, builds an INSERT statement with the values in the same order as the field list, runs it and prints the table. Try the same roll_no twice to see the duplicate error.",
- keys:[["isset($_POST['insert'])","Runs the PHP block only after the INSERT button is pressed."],["INSERT INTO student","Adds a new row to this table."],["VALUES","Values must follow the order of the field list."],["$_POST['roll_no']","Reads the value typed in the form field named roll_no."]],
- mk:["Form with fields and submit button","Connect and select the database","INSERT INTO ... VALUES in the correct order","Run the query and display the records"],
- inputs:()=>F().map(f=>[f[0],f[0],SEED[0][f[1]]]),seed:1,
- run:v=>NEED()||(()=>{const o={};F().forEach(f=>o[f[1]]=(v[f[0]]||"").trim());if(!o.id)return{bad:1,msg:"Error: roll_no is empty"};if(rows.some(r=>r.id===o.id))return{bad:1,msg:`Error: Duplicate entry '${o.id}' for key 'PRIMARY'`};rows.push(o);return R("Record inserted")})()},
-{id:"delete",title:"Delete a record",ask:`Write PHP code to delete a record from student and print the remaining records as a report (${H().join(", ")}).`,
- code:web(g,[c[0]],["delete","DELETE"],`    $id = $_POST['roll_no'];
-    // delete the record
-    $del = ${g.q('"DELETE FROM student WHERE roll_no=\'$id\'"')};
-    if ($del) { echo "Query executed<br><br>"; }
-    // display the remaining records as a report
-${rep(g)}`),
- say:"The form takes a roll_no. The script deletes only that record (WHERE), then runs SELECT * and prints what remains. Without WHERE, every record would be deleted.",
- keys:[["isset($_POST['delete'])","Runs only after the DELETE button is pressed."],["DELETE FROM student","Removes rows from the table."],["WHERE roll_no='$id'","Chooses which record. Forget this and the whole table is emptied."],["SELECT * FROM student","Reads the remaining records for the report."]],
- mk:["Form with roll_no and DELETE button","Connect and select the database","DELETE ... WHERE roll_no","SELECT and print the report table"],
- inputs:()=>[[c[0],c[0],"102"]],
- run:v=>NEED()||(()=>{const b=rows.length;rows=rows.filter(r=>r.id!==v[c[0]].trim());return R(b-rows.length?"Record deleted":"0 rows affected: no record with that id")})()},
-{id:"update",title:"Update a record",ask:`Write PHP code to update ${c[2]} and ${c[3]} of a student, given the roll_no, and print all records.`,
- code:web(g,U,["update","UPDATE"],`${rd(g,U)}
-    $sql = "UPDATE student SET ${U.slice(1).map(x=>`${x}='$${x}'`).join(", ")} WHERE roll_no='$roll_no'";
-    if (${g.q("$sql")}) { echo "Record updated<br><br>"; }
-    else { echo "Error: " . ${g.err}; }
-${rep(g)}`),
- say:"The form takes the roll_no and the new values. UPDATE ... SET changes the listed fields, and WHERE limits the change to that one student. Then the report shows the new data.",
- keys:[["UPDATE student SET","Names the table, then the fields to change."],[`WHERE roll_no='$roll_no'`,"Only this student changes. Without WHERE every row would."],["isset($_POST['update'])","Runs only after the UPDATE button is pressed."]],
- mk:["Form with id and new values","Connect and select the database","UPDATE ... SET ... WHERE","Run the query and print the records"],
- inputs:()=>U.map(x=>[x,x,x===c[0]?"101":dv(x)]),
- run:v=>NEED()||(()=>{const r=rows.find(x=>x.id===v[c[0]].trim());if(!r)return R("0 rows affected: no record with that id");r[kf(c[2])]=v[c[2]];r[kf(c[3])]=v[c[3]];return R("Record updated")})()},
+const dv=k=>({id:"101",a:"Margao, Goa",m:"BCA"})[kf(k)]||"";
+const PR=()=>{const g=G();const A=[
 {id:"gross",title:"Gross salary report",ask:"Database Employee, table Emp_table (empid, name, basic_salary). DA = 53% of basic, HRA = 15% of basic, Gross = Basic + DA + HRA. Print a report.",setup:"Emp_table",
  code:calcCode(g,"Employee","Emp_table","<th>Empid</th><th>Name</th><th>Basic salary</th><th>DA</th><th>HRA</th><th>Gross salary</th>",`    $basic = $row['basic_salary'];
     $da = $basic * 53 / 100;
@@ -202,18 +132,82 @@ ${rep(g)}`),
  keys:[["$deposit * 6 / 100","Interest at 6%."],["$deposit + $interest","Total amount."],["$row['Custid']","Array keys are case-sensitive: write the field exactly as created."]],
  mk:["Connect and select Customer","SELECT * FROM Bank","Interest and Total formulas inside the loop","Table with headings and rows, then close"],
  inputs:[["r","interest %","6"]],
- run:v=>({cols:["Cust_id","Name","Deposit","Interest","Total Amount"],rows:CT.Bank.rows.map(r=>{const i=r[2]*v.r/100;return[r[0],r[1],r[2],i,r[2]+i]}),browser:1})}];return["create","insert","update","delete","gross","int"].map(i=>A.find(x=>x.id===i))};
+ run:v=>({cols:["Cust_id","Name","Deposit","Interest","Total Amount"],rows:CT.Bank.rows.map(r=>{const i=r[2]*v.r/100;return[r[0],r[1],r[2],i,r[2]+i]}),browser:1})}];return PN().concat(["gross","int"].map(i=>A.find(x=>x.id===i)))};
+
+/* ---- programs from the Word file (shown first) ---- */
+const ind=(s,n=4)=>s.split("\n").map(l=>l?" ".repeat(n)+l:l).join("\n");
+const TH="<tr><th>Roll No</th><th>Name</th><th>Address</th><th>Course</th></tr>";
+const TR=`<tr><td>".$row['roll_no']."</td><td>".$row['name']."</td><td>".$row['address']."</td><td>".$row['course']."</td></tr>`;
+const FLD=[["Roll No","roll_no"],["Name","name"],["Address","address"],["Course","course"]];
+const TYW={id:"INT PRIMARY KEY",name:"VARCHAR(50)",a:"VARCHAR(100)",m:"VARCHAR(50)"};
+const CM=`$con = mysql_connect("localhost", "root", "")\n       or die(mysql_error());\n\nmysql_select_db("college", $con);`;
+const cn=g=>g.i?`$con = mysqli_connect("localhost", "root", "", "college");\nif (!$con) {\n    die("Connection failed: " . mysqli_connect_error());\n}`:`$con = mysql_connect("localhost", "root", "")\n       or die(mysql_error());\nmysql_select_db("college", $con);`;
+const RD4=`    $roll_no = $_POST['roll_no'];\n    $name = $_POST['name'];\n    $address = $_POST['address'];\n    $course = $_POST['course'];`;
+const DEL='"DELETE FROM student WHERE roll_no=\'$roll_no\'"';
+const rp=g=>`$result = ${g.q('"SELECT * FROM student"')};\necho "<table border='1'>";\necho "${TH}";\n\nwhile ($row = ${g.P}fetch_array($result)) {\n    echo "${TR}";\n}\necho "</table>";`;
+const pg=(fl,b,v,body)=>`<html>\n<body>\n<form method="post">\n${fl.map(f=>`    ${f[0]}: <input type="text" name="${f[1]}"><br><br>`).join("\n")}\n    <input type="submit" name="${b}" value="${v}">\n</form>\n\n<?php\nif (isset($_POST['${b}'])) {\n${body}\n}\n?>\n</body>\n</html>`;
+const okErr=(g,s,m)=>`    if (${g.q(s)}) {\n        echo "${m}<br><br>";\n    } else {\n        echo ${g.err};\n    }`;
+const crW=g=>`<?php\n${g.i?cn(g):CM}\n\n$sql = "CREATE TABLE student (\n        roll_no INT PRIMARY KEY,\n        name VARCHAR(50),\n        address VARCHAR(100),\n        course VARCHAR(50)\n        )";\n\nif (${g.q("$sql")}) {\n    echo "Student table created successfully";\n} else {\n    echo ${g.err};\n}\n\n${g.P}close($con);\n?>`;
+const bIns=g=>`${ind(cn(g))}\n\n${RD4}\n\n    $sql = "INSERT INTO student\n            VALUES ('$roll_no', '$name', '$address', '$course')";\n\n${okErr(g,"$sql","Record inserted successfully")}\n\n${ind(rp(g))}\n    ${g.P}close($con);`;
+const bDel=g=>`${ind(cn(g))}\n\n    $roll_no = $_POST['roll_no'];\n\n${okErr(g,DEL,"Delete query executed")}\n\n${ind(rp(g))}\n    ${g.P}close($con);`;
+const bUpd=g=>`${ind(cn(g))}\n\n${RD4}\n\n    $sql = "UPDATE student SET name='$name',\n            address='$address', course='$course'\n            WHERE roll_no='$roll_no'";\n\n${okErr(g,"$sql","Update query executed")}\n\n${ind(rp(g))}\n    ${g.P}close($con);`;
+const vwW=g=>`<?php\n${cn(g)}\n\n$result = ${g.q('"SELECT * FROM student"')};\n\necho "<table border='1'>";\necho "${TH}";\n\nwhile ($row = ${g.P}fetch_array($result)) {\n    echo "${TR}";\n}\n\necho "</table>";\n${g.P}close($con);\n?>`;
+const srW=g=>{const pad=" ".repeat(4+('$result = '+g.P+'query('+(g.i?'$con, ':'')+'"').length);
+return `<html>\n<body>\n<form method="post" action="">\n    Roll No: <input type="text" name="roll_no"><br><br>\n    <input type="submit" name="search" value="Search">\n</form>\n<?php\nif (isset($_POST['search'])) {\n${ind(cn(g))}\n    $roll_no = $_POST['roll_no'];\n    // Search the student record\n    $result = ${g.P}query(${g.i?"$con, ":""}"SELECT * FROM student\n${pad}WHERE roll_no='$roll_no'");\n    if (${g.P}num_rows($result) > 0) {\n        echo "<table border='1'>";\n        echo "${TH}";\n        while ($row = ${g.P}fetch_array($result)) {\n            echo "<tr>";\n            echo "<td>".$row['roll_no']."</td>";\n            echo "<td>".$row['name']."</td>";\n            echo "<td>".$row['address']."</td>";\n            echo "<td>".$row['course']."</td>";\n            echo "</tr>";\n        }\n        echo "</table>";\n    } else {\n        echo "Student record not found";\n    }\n    ${g.P}close($con);\n}\n?>\n</body>\n</html>`};
+const insW=(v,m)=>NEED()||(()=>{const o={};F().forEach(f=>o[f[1]]=(v[f[0]]||"").trim());if(!o.id)return{bad:1,msg:"Error: roll_no is empty"};if(rows.some(r=>r.id===o.id))return{bad:1,msg:`Error: Duplicate entry '${o.id}' for key 'PRIMARY'`};rows.push(o);return R(m)})();
+const PN=()=>{const g=G();return[
+{id:"wcreate",title:"Create the student table",ask:"Create a table named student in the college database with the fields roll_no, name, address, and course.",
+ code:crW(g),
+ say:"Connect to the server, select the college database, then send a CREATE TABLE statement. The query returns TRUE on success, so test it with if and print the error otherwise. Run it twice in the demo to see the error.",
+ keys:[["CREATE TABLE student","Table name, then each field followed by its data type."],["roll_no INT PRIMARY KEY","Whole-number roll number that must be unique: no two students can share one."],["VARCHAR(50)","Text up to 50 characters. Address allows 100."],["mysql_query","Sends the SQL to MySQL and returns TRUE or FALSE, so it works inside if."],["mysql_close","Closes the connection at the end."]],
+ mk:["Connect to the MySQL server and select the database","CREATE TABLE with correct fields and data types","Run the query and check the result","Print the message or error, then close"],
+ inputs:[],drop:1,run:()=>{if(made)return{bad:1,msg:"Error: Table 'student' already exists"};made=true;rows=[];return{ok:1,msg:"Student table created successfully",cols:["Field","Type","Key"],rows:F().map(f=>[f[0],TYW[f[1]].replace(" PRIMARY KEY",""),f[1]==="id"?"PRI":""])}}},
+{id:"winsert",title:"Insert a record and print the report",ask:"Accept student details using a form, insert the record into student, and display all records after insertion.",
+ code:pg(FLD,"submit","Insert",bIns(g)),
+ say:"A form collects the four values. On submit, the script connects, reads each value from $_POST, and runs INSERT with the values in table order. It then runs SELECT * and prints every record in a table. Try the same roll_no twice to see the duplicate error.",
+ keys:[["isset($_POST['submit'])","Runs the PHP block only after the Insert button is pressed."],["INSERT INTO student","Adds a new row to the table."],["VALUES","Values must follow the column order of the table: roll_no, name, address, course."],["$_POST['roll_no']","Reads the value typed in the form field named roll_no."],["mysql_fetch_array","Reads the next row as an array. The while loop ends when no rows are left."]],
+ mk:["Form with fields and submit button","Connect and select the database","INSERT INTO ... VALUES in the correct order","SELECT * and print the records in a table"],
+ inputs:()=>F().map(f=>[f[0],f[0],SEED[0][f[1]]]),seed:1,
+ run:v=>insW(v,"Record inserted successfully")},
+{id:"wdelete",title:"Delete a record and print the report",ask:"Accept roll_no, delete the matching student record, and display the remaining records.",
+ code:pg([FLD[0]],"delete","Delete",bDel(g)),
+ say:"The form takes a roll_no. The script deletes only that record using WHERE, then runs SELECT * and prints what remains. Without WHERE, every record would be deleted.",
+ keys:[["isset($_POST['delete'])","Runs only after the Delete button is pressed."],["DELETE FROM student","Removes rows from the table."],["WHERE roll_no='$roll_no'","Chooses which record to delete. Forget this and the whole table is emptied."],["SELECT * FROM student","Reads the remaining records for the report."]],
+ mk:["Form with roll_no and Delete button","Connect and select the database","DELETE ... WHERE roll_no","SELECT * and print the remaining records"],
+ inputs:[["roll_no","roll_no","102"]],
+ run:v=>NEED()||(()=>{rows=rows.filter(r=>r.id!==v.roll_no.trim());return R("Delete query executed")})()},
+{id:"wupdate",title:"Update a record and print the report",ask:"Accept roll_no and the new name, address, and course. Update the matching record and display all records.",
+ code:pg(FLD,"update","Update",bUpd(g)),
+ say:"The form takes the roll_no and the new values. UPDATE ... SET changes the three fields, and WHERE limits the change to that one student. Then SELECT * prints the new data.",
+ keys:[["isset($_POST['update'])","Runs only after the Update button is pressed."],["UPDATE student SET","Names the table, then the fields to change."],["WHERE roll_no='$roll_no'","Only this student changes. Without WHERE every row would."],["mysql_query","Runs the UPDATE and returns TRUE on success."]],
+ mk:["Form with roll_no and new values","Connect and select the database","UPDATE ... SET ... WHERE","Run the query and print all records"],
+ inputs:()=>F().map(f=>[f[0],f[0],f[1]==="id"?"101":f[1]==="name"?"Diena":dv(f[0])]),
+ run:v=>NEED()||(()=>{const r=rows.find(x=>x.id===v.roll_no.trim());if(r){r.name=v.name;r.a=v.address;r.m=v.course}return R("Update query executed")})()},
+{id:"wview",title:"View student records",ask:"Display all records from the student table in an HTML table.",
+ code:vwW(g),
+ say:"Connect, run SELECT * FROM student, print the table headings, then loop through the result with fetch_array and print one table row per student.",
+ keys:[["SELECT * FROM student","Reads every record from the table."],["mysql_fetch_array","Reads the next row as an array. The loop ends when no rows are left."],["<table border='1'>","Opens an HTML table with a border."],["$row['roll_no']","Reads one field from the current row. The key must match the column name."]],
+ mk:["Connect and select the database","SELECT * FROM student","Table headings","while loop printing each row, then close"],
+ inputs:[],run:()=>NEED()||R("")},
+{id:"wsearch",title:"Search a student by roll number",ask:"Search a student by roll number and display the record.",
+ code:srW(g),
+ say:"The form takes a roll_no. SELECT ... WHERE finds that student, and num_rows tells whether any record matched. If yes, print it in a table, otherwise print a not found message.",
+ keys:[["isset($_POST['search'])","Runs only after the Search button is pressed."],["WHERE roll_no='$roll_no'","Selects only the matching student."],["mysql_num_rows","Counts the rows returned. Zero means no student has that roll number."],["Student record not found","Message printed in the else part when nothing matched."]],
+ mk:["Form with roll_no and Search button","Connect and select the database","SELECT ... WHERE roll_no","Check num_rows, print the record or the not found message"],
+ inputs:[["roll_no","roll_no","101"]],
+ run:v=>NEED()||(()=>{const r=rows.find(x=>x.id===v.roll_no.trim());return r?{ok:1,cols:H(),rows:[F().map(f=>r[f[1]])],browser:1}:{bad:1,msg:"Student record not found"}})()}
+]};
 
 /* ---- programs tab ---- */
 function paint(id,ki){const p=PR().find(x=>x.id===id);let h=esc(p.code);if(ki!=null){const k=esc(p.keys[ki][0]),kk=mode==="mysqli"?k.replace(/^mysql_/,"mysqli_"):k,t=h.includes(kk)?kk:k;h=h.split(t).join("<mark>"+t+"</mark>")}
  $("#c-"+id).innerHTML=`<button class="cp" data-copy="${id}">Copy</button>`+h}
-function progTab(){const P=PR();let h=`<div class="tip"><b>Suggested order:</b> run CREATE, then INSERT (or add the 3 sample rows), then UPDATE and DELETE. They share one table, so each result carries into the next. Calculation programs use their own tables.</div>`;
+function progTab(){const P=PR();let h=`<div class="tip"><b>Suggested order:</b> run CREATE, then INSERT (or add the 3 sample rows), then DELETE and UPDATE. They share one table, so each result carries into the next. Calculation programs use their own tables.</div>`;
  P.forEach(p=>{const ins=typeof p.inputs==="function"?p.inputs():p.inputs;
  h+=`<section class="card"><div class="meta"><span class="pill">4 marks</span>${esc(p.title)}</div><h2>${esc(p.ask)}</h2><pre id="c-${p.id}"></pre><div class="say">${esc(p.say)}</div>
  <div class="meta">Tap a part of the code to see what it does:</div><div class="keys">${p.keys.map((k,i)=>`<button class="key" data-key="${p.id}:${i}" aria-pressed="false">${esc(k[0])}</button>`).join("")}</div><div class="keyx" id="kx-${p.id}"></div>
  <details><summary>How the 4 marks are usually earned</summary><ol>${p.mk.map(m=>`<li>${m} (1)</li>`).join("")}</ol></details>
  ${p.setup?`<details><summary>SQL to create and fill ${p.setup} first</summary><pre>${esc(sqlT(p.setup))}</pre></details>`:""}
- <div class="lab"><h3>Run it</h3><div class="row">${ins.map(i=>`<label>${esc(i[1])}<input id="in-${p.id}-${i[0]}" value="${esc(i[2])}"></label>`).join("")}<button class="go" data-run="${p.id}">Run</button>${p.seed?`<button class="ghost" data-seed="1">Add 3 sample rows</button>`:""}${p.id==="create"?`<button class="ghost" data-drop="1">Drop table</button>`:""}</div><div class="out" id="o-${p.id}"></div></div></section>`});
+ <div class="lab"><h3>Run it</h3><div class="row">${ins.map(i=>`<label>${esc(i[1])}<input id="in-${p.id}-${i[0]}" value="${esc(i[2])}"></label>`).join("")}<button class="go" data-run="${p.id}">Run</button>${p.seed?`<button class="ghost" data-seed="${p.id}">Add 3 sample rows</button>`:""}${p.drop?`<button class="ghost" data-drop="${p.id}">Drop table</button>`:""}</div><div class="out" id="o-${p.id}"></div></div></section>`});
  $("#main").innerHTML=h;P.forEach(p=>paint(p.id))}
 function out(id,r){let h=r.msg?`<div class="msg ${r.bad?"bad":"ok"}">${esc(r.msg)}</div>`:"";if(!r.bad)h+=`<div class="browser"><div>${tbl(r.cols,r.rows)}</div></div>`;$("#o-"+id).innerHTML=h}
 function runP(id){const p=PR().find(x=>x.id===id),ins=typeof p.inputs==="function"?p.inputs():p.inputs,v={};ins.forEach(i=>v[i[0]]=$(`#in-${id}-${i[0]}`).value);out(id,p.run(v))}
@@ -232,30 +226,24 @@ function check(){const a=calc();let ok=0,n=0;document.querySelectorAll("[data-an
  $("#sc").className="msg "+(ok===n?"ok":"bad");$("#sc").textContent=ok===n?`Full marks: ${ok}/${n}`:`${ok}/${n} correct. Red cells need another look.`}
 function working(){const g=cm==="gross",a=calc();$("#wkb").hidden=false;$("#wkb").textContent=CS.rows.map((b,i)=>g?`Basic ${b}\nDA = ${b} × ${CS.r[0]} / 100 = ${a[i][0]}\nHRA = ${b} × ${CS.r[1]} / 100 = ${a[i][1]}\nGross = ${b} + ${a[i][0]} + ${a[i][1]} = ${a[i][2]}`:`Deposit ${b}\nInterest = ${b} × ${CS.r[0]} / 100 = ${a[i][0]}\nTotal = ${b} + ${a[i][0]} = ${a[i][1]}`).join("\n\n")}
 
-/* ---- checked and corrected ---- */
-function fix(){$("#main").innerHTML=`<div class="card"><h2>What was checked in the question bank</h2><div class="say">The queries, loops and formulas (DA 53%, HRA 15%, interest 6%) are all correct. These are the small points worth fixing or knowing:</div>
-<ol><li><b>Error function after a failed connect.</b> The mapping table pairs mysql_error() with mysqli_error($con). If mysqli_connect() fails, $con is FALSE, so use <code>mysqli_connect_error()</code>. The programs already do; the table row should say so.</li>
-<li><b>No feedback after DELETE.</b> The report appeared silently. This page adds a check on the query result, so the student sees whether it ran.</li>
-<li><b>Field names are case-sensitive in PHP.</b> <code>$row['Custid']</code> only works if the table was created with Custid. Create the Bank table exactly as shown here.</li>
-<li><b>Input goes straight into the query.</b> Here the form values are used as typed, which is fine for practice. A real website should use prepared statements.</li>
-<li><b>mysql_* needs PHP 5.</b> It was removed in PHP 7, so on XAMPP or WAMP with a recent PHP, practise with the mysqli_* switch.</li>
-<li><b>Heading text.</b> The report heading says Cust_id while the field is Custid. That is fine: headings are only labels.</li></ol></div>`}
-
 /* ---- wiring ---- */
-const TABS=[["prog","4-mark programs"],["calc","Calculation drills"],["fix","Checked and corrected"]];
+const TABS=[["prog","Basic programs"],["calc","Calculation drills"]];
 function render(){$("#tabs").innerHTML=TABS.map(t=>`<button class="tab" role="tab" data-tab="${t[0]}" aria-selected="${t[0]===tab}">${t[1]}</button>`).join("");
- if(tab==="prog")progTab();else if(tab==="calc"){CS?drill():newSheet()}else fix()}
+ if(tab==="prog")progTab();else{CS?drill():newSheet()}}
 document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const d=t.dataset;
  if(d.tab){tab=d.tab;render();scrollTo(0,0)}
  else if(d.m){mode=d.m;document.querySelectorAll(".seg [data-m]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===mode));if(tab==="prog")PR().forEach(p=>paint(p.id))}
   else if(d.run)runP(d.run)
- else if(d.seed){if(!made)out("insert",NEED());else{rows=SEED.map(r=>({...r}));out("insert",R("3 sample rows added"))}}
- else if(d.drop){made=false;rows=[];$("#o-create").innerHTML='<div class="msg ok">Table dropped. Run CREATE again.</div>'}
+ else if(d.seed){if(!made)out(d.seed,NEED());else{rows=SEED.map(r=>({...r}));out(d.seed,R("3 sample rows added"))}}
+ else if(d.drop){made=false;rows=[];$("#o-"+d.drop).innerHTML='<div class="msg ok">Table dropped. Run CREATE again.</div>'}
  else if(d.key){const[id,i]=d.key.split(":"),on=t.getAttribute("aria-pressed")==="true";document.querySelectorAll(`[data-key^="${id}:"]`).forEach(b=>b.setAttribute("aria-pressed","false"));const p=PR().find(x=>x.id===id);if(on){paint(id);$("#kx-"+id).textContent=""}else{t.setAttribute("aria-pressed","true");paint(id,+i);$("#kx-"+id).textContent=p.keys[i][1]}}
  else if(d.copy){const txt=$("#c-"+d.copy).innerText.replace(/^Copy\n?/,"");try{navigator.clipboard.writeText(txt);t.textContent="Copied"}catch(x){t.textContent="Select and copy"}setTimeout(()=>t.textContent="Copy",1200)}
  else if(d.cm){cm=d.cm;newSheet()}
  else if(t.id==="chk")check();else if(t.id==="wk")working();else if(t.id==="nw")newSheet()});
 render();
 </script>
+<footer style="font-size: medium; font-family: 'Courier New', Courier, monospace; text-align: center; margin-bottom: 25px;">
+   Powered by Mithili S Kakodkar
+</footer>
 </body>
 </html>
